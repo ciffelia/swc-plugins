@@ -26,6 +26,7 @@ fn inject_unique_placeholders(str_arr: impl IntoIterator<Item = impl AsRef<str>>
 
 static LINEBREAK_REGEX_RAW: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?:\\r|\\n|\r|\n)\s*").unwrap());
+static LINEBREAK_REGEX_COOKED: Lazy<Regex> = Lazy::new(|| Regex::new(r"[\r\n]\s*").unwrap());
 static MULTILINE_COMMENT_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?s)/\*[^!].*?\*/").unwrap());
 static SYMBOL_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"\s*[;:{},]\s*").unwrap());
@@ -145,8 +146,12 @@ fn minify_values(
     }
 }
 
-pub fn minify_raw_values(values: impl IntoIterator<Item = Atom>) -> MinifyResult {
+pub fn minify_raw_values(values: impl IntoIterator<Item = impl AsRef<str>>) -> MinifyResult {
     minify_values(values, &LINEBREAK_REGEX_RAW)
+}
+
+pub fn minify_cooked_values(values: impl IntoIterator<Item = impl AsRef<str>>) -> MinifyResult {
+    minify_values(values, &LINEBREAK_REGEX_COOKED)
 }
 
 #[cfg(test)]
@@ -223,14 +228,25 @@ mod tests {
                 description
             );
 
-            // test minify_values()
+            // test minify_raw_values()
             assert_eq!(
-                minify_values(vec![code], &LINEBREAK_REGEX_RAW),
+                minify_raw_values(vec![code]),
                 MinifyResult {
                     values: vec![expected.into()],
                     retained_expression_indices: HashSet::new(),
                 },
-                "{}: minify_css_quasis",
+                "{}: minify_raw_values",
+                description
+            );
+
+            // test minify_cooked_values()
+            assert_eq!(
+                minify_cooked_values(vec![code]),
+                MinifyResult {
+                    values: vec![expected.into()],
+                    retained_expression_indices: HashSet::new(),
+                },
+                "{}: minify_cooked_values",
                 description
             );
         }
@@ -264,25 +280,46 @@ mod tests {
             "this is a /*! dont ignore me please */ test/* but you can ignore me */",
             "this is a /*! dont ignore me please */ test",
         );
+    }
 
-        test(
-            "works with raw escape codes",
-            "this\\nis\\na/* ignore me \\n please */\\ntest",
-            "this is a test",
+    #[test]
+    fn test_minify_raw_values() {
+        // Returns the indices of retained placeholders (expressions)
+        assert_eq!(
+            minify_raw_values(vec!["this is some\ninput with ", " and // ignored ", ""]),
+            MinifyResult {
+                values: vec!["this is some input with ".into(), " and ".into()],
+                retained_expression_indices: vec![0].into_iter().collect(),
+            }
+        );
+
+        // works with raw escape codes
+        assert_eq!(
+            minify_raw_values(vec!["this\\nis\\na/* ignore me \\n please */\\ntest"]),
+            MinifyResult {
+                values: vec!["this is a test".into()],
+                retained_expression_indices: HashSet::new(),
+            }
         );
     }
 
     #[test]
-    fn test_minify_values() {
+    fn test_minify_cooked_values() {
         // Returns the indices of retained placeholders (expressions)
         assert_eq!(
-            minify_values(
-                vec!["this is some\ninput with ", " and // ignored ", ""],
-                &LINEBREAK_REGEX_RAW
-            ),
+            minify_cooked_values(vec!["this is some\ninput with ", " and // ignored ", ""]),
             MinifyResult {
                 values: vec!["this is some input with ".into(), " and ".into()],
                 retained_expression_indices: vec![0].into_iter().collect(),
+            }
+        );
+
+        // works with raw escape codes
+        assert_eq!(
+            minify_cooked_values(vec!["this\\nis\\na/* ignore me \\n please */\\ntest"]),
+            MinifyResult {
+                values: vec!["this\\nis\\na \\ntest".into()],
+                retained_expression_indices: HashSet::new(),
             }
         );
     }

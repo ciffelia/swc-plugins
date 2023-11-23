@@ -6,7 +6,7 @@ use swc_common::DUMMY_SP;
 use swc_ecma_ast::*;
 use swc_ecma_visit::{as_folder, noop_visit_mut_type, Fold, VisitMut, VisitMutWith};
 
-use super::css::{minify_raw_values, MinifyResult};
+use super::css::{minify_cooked_values, minify_raw_values, MinifyResult};
 use crate::utils::State;
 
 pub fn minify(state: Rc<RefCell<State>>) -> impl Fold + VisitMut {
@@ -38,18 +38,49 @@ impl VisitMut for Minify {
             retained_expression_indices,
         } = minify_raw_values(tagged.tpl.quasis.iter().map(|q| q.raw.clone()));
 
-        tagged.tpl.quasis = raw_values_minified
-            .into_iter()
-            .map(|raw| TplElement {
-                span: DUMMY_SP,
-                tail: false,
-                // Omitting `cooked` field since swc_ecma_codegen doesn't use it. If this breaks
-                // other plugins, we may need to set some value.
-                // https://rustdoc.swc.rs/swc_ecma_ast/struct.TplElement.html#structfield.cooked
-                cooked: None,
-                raw,
-            })
-            .collect();
+        let cooked_values_minified = {
+            if tagged.tpl.quasis.iter().any(|q| q.cooked.is_none()) {
+                None
+            } else {
+                let MinifyResult {
+                    values: cooked_values_minified,
+                    retained_expression_indices: cooked_retained_expression_indices,
+                } = minify_cooked_values(
+                    tagged.tpl.quasis.iter().map(|q| q.cooked.clone().unwrap()),
+                );
+
+                if raw_values_minified.len() == cooked_values_minified.len()
+                    && retained_expression_indices == cooked_retained_expression_indices
+                {
+                    Some(cooked_values_minified)
+                } else {
+                    None
+                }
+            }
+        };
+
+        tagged.tpl.quasis = if let Some(cooked_values_minified) = cooked_values_minified {
+            raw_values_minified
+                .into_iter()
+                .zip(cooked_values_minified)
+                .map(|(raw, cooked)| TplElement {
+                    span: DUMMY_SP,
+                    tail: false,
+                    cooked: Some(cooked),
+                    raw,
+                })
+                .collect()
+        } else {
+            raw_values_minified
+                .into_iter()
+                .map(|raw| TplElement {
+                    span: DUMMY_SP,
+                    tail: false,
+                    cooked: None,
+                    raw,
+                })
+                .collect()
+        };
         if let Some(q) = tagged.tpl.quasis.last_mut() {
             q.tail = true;
         }

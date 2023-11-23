@@ -89,10 +89,17 @@ impl VisitMut for Minify {
         // NOTE: Here we assume that the expressions don't have side effects, as
         // babel-plugin-styled-components does.
         {
-            let mut idx: usize = 0;
+            let mut idx1: usize = 0;
+            let mut idx2: usize = 0;
             tagged.tpl.exprs.retain(|_| {
-                idx += 1;
-                retained_expression_indices.contains(&(idx - 1))
+                if Some(idx1) == retained_expression_indices.get(idx2).copied() {
+                    idx1 += 1;
+                    idx2 += 1;
+                    true
+                } else {
+                    idx1 += 1;
+                    false
+                }
             });
         }
     }

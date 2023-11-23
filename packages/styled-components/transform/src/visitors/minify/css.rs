@@ -1,7 +1,5 @@
 //! Port of https://github.com/styled-components/babel-plugin-styled-components/blob/4e2eb388d9c90f2921c306c760657d059d01a518/src/minify/index.js
 
-use std::collections::HashSet;
-
 use once_cell::sync::Lazy;
 use regex::Regex;
 use swc_atoms::Atom;
@@ -119,7 +117,7 @@ pub struct MinifyResult {
     pub values: Vec<Atom>,
 
     /// Indices of expressions that are not eliminated (i.e. not in comments).
-    pub retained_expression_indices: HashSet<usize>,
+    pub retained_expression_indices: Vec<usize>,
 }
 
 /// Minifies template literal quasis
@@ -135,7 +133,7 @@ fn minify_values(
         .map(Atom::from)
         .collect();
 
-    let retained_expression_indices: HashSet<usize> = PLACEHOLDER_REGEX
+    let retained_expression_indices = PLACEHOLDER_REGEX
         .captures_iter(&minified_code)
         .map(|captures| captures[1].parse().unwrap())
         .collect();
@@ -233,7 +231,7 @@ mod tests {
                 minify_raw_values(vec![code]),
                 MinifyResult {
                     values: vec![expected.into()],
-                    retained_expression_indices: HashSet::new(),
+                    retained_expression_indices: vec![],
                 },
                 "{}: minify_raw_values",
                 description
@@ -244,7 +242,7 @@ mod tests {
                 minify_cooked_values(vec![code]),
                 MinifyResult {
                     values: vec![expected.into()],
-                    retained_expression_indices: HashSet::new(),
+                    retained_expression_indices: vec![],
                 },
                 "{}: minify_cooked_values",
                 description
@@ -289,7 +287,7 @@ mod tests {
             minify_raw_values(vec!["this is some\ninput with ", " and // ignored ", ""]),
             MinifyResult {
                 values: vec!["this is some input with ".into(), " and ".into()],
-                retained_expression_indices: vec![0].into_iter().collect(),
+                retained_expression_indices: vec![0],
             }
         );
 
@@ -298,7 +296,7 @@ mod tests {
             minify_raw_values(vec!["this\\nis\\na/* ignore me \\n please */\\ntest"]),
             MinifyResult {
                 values: vec!["this is a test".into()],
-                retained_expression_indices: HashSet::new(),
+                retained_expression_indices: vec![],
             }
         );
     }
@@ -310,7 +308,7 @@ mod tests {
             minify_cooked_values(vec!["this is some\ninput with ", " and // ignored ", ""]),
             MinifyResult {
                 values: vec!["this is some input with ".into(), " and ".into()],
-                retained_expression_indices: vec![0].into_iter().collect(),
+                retained_expression_indices: vec![0],
             }
         );
 
@@ -319,7 +317,7 @@ mod tests {
             minify_cooked_values(vec!["this\\nis\\na/* ignore me \\n please */\\ntest"]),
             MinifyResult {
                 values: vec!["this\\nis\\na \\ntest".into()],
-                retained_expression_indices: HashSet::new(),
+                retained_expression_indices: vec![],
             }
         );
     }

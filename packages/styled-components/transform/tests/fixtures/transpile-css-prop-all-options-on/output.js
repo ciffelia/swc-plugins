@@ -6,11 +6,15 @@ const { SomeOtherComponent } = require('../SomeOtherComponentPath');
  */ const Thing = styled.div.withConfig({
     displayName: "code__Thing",
     componentId: "sc-867225be-0"
-})`color:red;`;
+})([
+    "color:red;"
+]);
 const Thing2 = styled(Thing).withConfig({
     displayName: "code__Thing2",
     componentId: "sc-867225be-1"
-})`background:blue;`;
+})([
+    "background:blue;"
+]);
 /*
  * Basic fixtures
  */ const StaticString = (p)=><_StyledP>A</_StyledP>;
@@ -82,7 +86,9 @@ const SpreadObjectPropMixedInputs = (p)=>{
 const Thing3 = styled.div.withConfig({
     displayName: "code__Thing3",
     componentId: "sc-867225be-2"
-})`color:blue;`;
+})([
+    "color:blue;"
+]);
 var _StyledThing6 = styled(Thing3).withConfig({
     displayName: "code___StyledThing6",
     componentId: "sc-867225be-3"
@@ -192,7 +198,9 @@ var _StyledP = styled("p").withConfig({
 var _StyledP2 = styled("p").withConfig({
     displayName: "code___StyledP2",
     componentId: "sc-867225be-12"
-})`flex:1;`;
+})([
+    "flex:1;"
+]);
 var _StyledP3 = styled("p").withConfig({
     displayName: "code___StyledP3",
     componentId: "sc-867225be-13"
@@ -206,7 +214,9 @@ var _StyledP4 = styled("p").withConfig({
 var _StyledP5 = styled("p").withConfig({
     displayName: "code___StyledP5",
     componentId: "sc-867225be-15"
-})`color:blue;`;
+})([
+    "color:blue;"
+]);
 var _StyledParagraph = styled(Paragraph).withConfig({
     displayName: "code___StyledParagraph",
     componentId: "sc-867225be-16"
@@ -218,23 +228,38 @@ var _StyledP6 = styled("p").withConfig({
 var _StyledP7 = styled("p").withConfig({
     displayName: "code___StyledP7",
     componentId: "sc-867225be-18"
-})`background:${(p)=>p.$_css2};`;
+})([
+    "background:",
+    ";"
+], (p)=>p.$_css2);
 var _StyledP8 = styled("p").withConfig({
     displayName: "code___StyledP8",
     componentId: "sc-867225be-19"
-})`color:${(props1)=>props1.theme.a};`;
+})([
+    "color:",
+    ";"
+], (props1)=>props1.theme.a);
 var _StyledP9 = styled("p").withConfig({
     displayName: "code___StyledP9",
     componentId: "sc-867225be-20"
-})`border-radius:${radius}px;`;
+})([
+    "border-radius:",
+    "px;"
+], radius);
 var _StyledP10 = styled("p").withConfig({
     displayName: "code___StyledP10",
     componentId: "sc-867225be-21"
-})`color:${(p)=>p.$_css3};`;
+})([
+    "color:",
+    ";"
+], (p)=>p.$_css3);
 var _StyledP11 = styled("p").withConfig({
     displayName: "code___StyledP11",
     componentId: "sc-867225be-22"
-})`color:${(props1)=>props1.theme.color};`;
+})([
+    "color:",
+    ";"
+], (props1)=>props1.theme.color);
 var _StyledButtonGhost = styled(Button.Ghost).withConfig({
     displayName: "code___StyledButtonGhost",
     componentId: "sc-867225be-23"
